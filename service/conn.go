@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/gob"
-	"log"
 	"net"
 	"sync"
 )
