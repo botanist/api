@@ -18,6 +18,9 @@ type RequestHandler interface {
 	Authenticate(c *Conn, uuid string, typeId uint32, key string) (deviceId uint32, rfAddr uint16, newKey string, err error)
 	GetRFAddr(c *Conn, id uint32) (rfAddr uint16, err error)
 	JoinRequest(c *Conn, uuid string, typeId uint32) (status JoinRequestStatus, deviceId uint32, rfAddr uint16, err error)
+	ConnectDevice(c *Conn, parentId uint32, uuid string, typeId uint32, port uint16) (id uint32, err error)
+	DisconnectDevice(c *Conn, parentId, id uint32) error
+	MoveDevice(c *Conn, parentId, id uint32, port uint16) error
 }
 
 func (c *Conn) HandleRequests(rh RequestHandler) {
@@ -63,6 +66,7 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 			addr, err := rh.GetRFAddr(c, v.DeviceId)
 			if err == UnauthorizedErr {
 				c.AuthenticationFailed(err.Error())
+				continue
 			}
 			
 			if addr != 0 {
@@ -78,6 +82,7 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 			status, id, addr, err := rh.JoinRequest(c, v.UUID, v.TypeId)
 			if err == UnauthorizedErr {
 				err = c.AuthenticationFailed(err.Error())
+				continue
 			}
 			
 			if status == JOIN_REQUEST_APPROVED {
@@ -89,6 +94,65 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 			} else {
 				err = c.JoinRequestPending(v.UUID)
 			}
+			
+			if err != nil {
+				log.Println(err)
+			}
+			
+		case ConnectDeviceMsg:
+			v := msg.(ConnectDeviceMsg)
+			
+			id, err := rh.ConnectDevice(c, v.ParentDeviceId, v.UUID, v.TypeId, v.Port)
+			if err == UnauthorizedErr {
+				err = c.AuthenticationFailed(err.Error())
+				continue
+			}
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			
+			if id > 0 {
+				err = c.ConnectDeviceApproved(v.UUID, v.ParentDeviceId, id)
+			} else {
+				err = c.ConnectDeviceDeclined(v.UUID, v.ParentDeviceId)
+			}			
+			
+			if err != nil {
+				log.Println(err)
+			}			
+
+		case MoveDeviceMsg:
+			v := msg.(MoveDeviceMsg)
+			
+			err = rh.MoveDevice(c, v.ParentDeviceId, v.DeviceId, v.Port)
+			if err == UnauthorizedErr {
+				err = c.AuthenticationFailed(err.Error())
+				continue
+			}
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			
+		case DisconnectDeviceMsg:
+			v := msg.(DisconnectDeviceMsg)
+			
+			err = rh.DisconnectDevice(c, v.ParentDeviceId, v.DeviceId)
+			if err == UnauthorizedErr {
+				err = c.AuthenticationFailed(err.Error())
+				continue
+			}
+
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			
+			
 		}
+		
 	}
 }
