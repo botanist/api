@@ -14,10 +14,10 @@ const (
 )
 
 type RequestHandler interface {
-	Hello(c *Conn, protoVersion uint32) uint32
-	Authenticate(c *Conn, UUID, key string) (uint32, uint16, string, error)
-	GetRFAddr(c *Conn, id uint32) (uint16, error)
-	JoinRequest(c *Conn, UUID string, typeId uint32) (JoinRequestStatus, uint32, uint16, error)
+	Hello(c *Conn, clientProtoVer uint32) (serverProtoVer uint32)
+	Authenticate(c *Conn, uuid string, typeId uint32, key string) (deviceId uint32, rfAddr uint16, newKey string, err error)
+	GetRFAddr(c *Conn, id uint32) (rfAddr uint16, err error)
+	JoinRequest(c *Conn, uuid string, typeId uint32) (status JoinRequestStatus, deviceId uint32, rfAddr uint16, err error)
 }
 
 func (c *Conn) HandleRequests(rh RequestHandler) {
@@ -32,7 +32,7 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 			log.Println(err)
 			continue
 		}
-
+		
 		switch msg.(type) {
 	
 		case HelloMsg:
@@ -46,7 +46,7 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 		case AuthenticateMsg:
 			v := msg.(AuthenticateMsg)
 			
-			id, addr, key, err := rh.Authenticate(c, v.UUID, v.Key)
+			id, addr, key, err := rh.Authenticate(c, v.UUID, v.TypeId, v.Key)
 			if err != nil {
 				err = c.AuthenticationFailed(err.Error())
 			} else {
