@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"net"
 	"sync"
+	"errors"
 )
 
 type Conn struct {
@@ -13,14 +14,14 @@ type Conn struct {
 	sync.RWMutex
 }
 
-func (s *Conn) Close() {
-	s.conn.Close()
+func (c *Conn) Close() {
+	c.conn.Close()
 }
 
-func (s *Conn) Read() (interface{}, error) {
+func (c *Conn) Read() (interface{}, error) {
 	var m ServerMessage
 
-	err := s.decoder.Decode(&m)
+	err := c.decoder.Decode(&m)
 	if err != nil {
 		return nil, err
 	}
@@ -28,50 +29,50 @@ func (s *Conn) Read() (interface{}, error) {
 	return m.Data, nil
 }
 
-func (s *Conn) Write(data interface{}) error {
-	s.Lock()
-	defer s.Unlock()
+func (c *Conn) Write(data interface{}) error {
+	c.Lock()
+	defer c.Unlock()
 
 	msg := ServerMessage{data}
-	err := s.encoder.Encode(msg)
+	err := c.encoder.Encode(msg)
 	return err
 }
 
-func (s *Conn) Hello(ver uint32) error {
-	return s.Write(HelloMsg{ProtocolVersion:ver})
+func (c *Conn) Hello(ver uint32) error {
+	return c.Write(HelloMsg{ProtocolVersion:ver})
 }
 
-func (s *Conn) Authenticate(typeId uint32, uuid string, key string) error {
-	return s.Write(AuthenticateMsg{TypeId: typeId, UUID: uuid, Key: key})
+func (c *Conn) Authenticate(typeId uint32, uuid string, key string) error {
+	return c.Write(AuthenticateMsg{TypeId: typeId, UUID: uuid, Key: key})
 }
 
-func (s *Conn) AuthenticationFailed(reason string) error {
-	return s.Write(AuthenticationFailedMsg{Reason:reason})
+func (c *Conn) AuthenticationFailed(reason string) error {
+	return c.Write(AuthenticationFailedMsg{Reason:reason})
 }
 
-func (s *Conn) AuthenticationSucceeded(deviceId uint32, rfAddr uint16, newKey string) error {
-	return s.Write(AuthenticationSucceededMsg{DeviceId: deviceId, RFAddr: rfAddr, NewKey: newKey})
+func (c *Conn) AuthenticationSucceeded(deviceId uint32, rfAddr uint16, newKey string) error {
+	return c.Write(AuthenticationSucceededMsg{DeviceId: deviceId, RFAddr: rfAddr, NewKey: newKey})
 }
 
-func (s *Conn) GetRFAddr(id uint32) error {
-	return s.Write(GetRFAddrMsg{DeviceId: id})
+func (c *Conn) GetRFAddr(id uint32) error {
+	return c.Write(GetRFAddrMsg{DeviceId: id})
 }
 
-func (s *Conn) SendRFAddr(id uint32, addr uint16) error {
-	return s.Write(RFAddrMsg{DeviceId: id, RFAddr: addr})
+func (c *Conn) RFAddr(id uint32, addr uint16) error {
+	return c.Write(RFAddrMsg{DeviceId: id, RFAddr: addr})
 }
 
 /* Types */
-func (s *Conn) GetType(id uint32) error {
-	return s.Write(GetTypeMsg{TypeId: id})
+func (c *Conn) GetType(id uint32) error {
+	return c.Write(GetTypeMsg{TypeId: id})
 }
 
-func (s *Conn) SendNoType(id uint32) error {
-	return s.Write(NoTypeMsg{TypeId: id})
+func (c *Conn) SendNoType(id uint32) error {
+	return c.Write(NoTypeMsg{TypeId: id})
 }
 
-func (s *Conn) SendType(id uint32, src string, masks []uint32, intervals []uint8) error {
-	return s.Write(TypeMsg{
+func (c *Conn) SendType(id uint32, src string, masks []uint32, intervals []uint8) error {
+	return c.Write(TypeMsg{
 		TypeId:    id,
 		Src:       src,
 		Masks:     masks,
@@ -80,38 +81,38 @@ func (s *Conn) SendType(id uint32, src string, masks []uint32, intervals []uint8
 }
 
 /* JOINING */
-func (s *Conn) RequestJoin(UUID string, typeId uint32) error {
-	return s.Write(JoinRequestMsg{
+func (c *Conn) RequestJoin(UUID string, typeId uint32) error {
+	return c.Write(JoinRequestMsg{
 		TypeId: typeId,
 		UUID:   UUID,
 	})
 }
 
-func (s *Conn) JoinRequestPending(UUID string) error {
-	return s.Write(JoinRequestPendingMsg{UUID: UUID})
+func (c *Conn) JoinRequestPending(UUID string) error {
+	return c.Write(JoinRequestPendingMsg{UUID: UUID})
 }
 
-func (s *Conn) JoinRequestDeclined(UUID string) error {
-	return s.Write(JoinRequestDeclinedMsg{UUID: UUID})
+func (c *Conn) JoinRequestDeclined(UUID string) error {
+	return c.Write(JoinRequestDeclinedMsg{UUID: UUID})
 }
 
-func (s *Conn) JoinRequestApproved(UUID string, id uint32, addr uint16) error {
-	return s.Write(JoinRequestApprovedMsg{UUID: UUID, DeviceId: id, RFAddr: addr})
+func (c *Conn) JoinRequestApproved(UUID string, id uint32, addr uint16) error {
+	return c.Write(JoinRequestApprovedMsg{UUID: UUID, DeviceId: id, RFAddr: addr})
 }
 
 /* WIRED SENSORS */
-func (s *Conn) ConnectDeviceDeclined(UUID string, parentId uint32) error {
-	return s.Write(ConnectDeviceDeclinedMsg{UUID: UUID, ParentDeviceId: parentId})
+func (c *Conn) ConnectDeviceDeclined(UUID string, parentId uint32) error {
+	return c.Write(ConnectDeviceDeclinedMsg{UUID: UUID, ParentDeviceId: parentId})
 }
 
-func (s *Conn) ConnectDeviceApproved(UUID string, parentId, id uint32) error {
-	return s.Write(ConnectDeviceApprovedMsg{UUID: UUID, ParentDeviceId: parentId, DeviceId: id})
+func (c *Conn) ConnectDeviceApproved(UUID string, parentId, id uint32) error {
+	return c.Write(ConnectDeviceApprovedMsg{UUID: UUID, ParentDeviceId: parentId, DeviceId: id})
 }
 
 /* Utilities */
 
-func (s *Conn) RemoteAddr() net.Addr {
-	return s.conn.RemoteAddr()
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
 }
 
 func NewConn(conn net.Conn) (*Conn, error) {
@@ -120,3 +121,5 @@ func NewConn(conn net.Conn) (*Conn, error) {
 
 	return &Conn{conn: conn, encoder: enc, decoder: dec}, nil
 }
+
+var UnauthorizedErr error = errors.New("Authentication required")
