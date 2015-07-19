@@ -15,12 +15,19 @@ const (
 
 type RequestHandler interface {
 	Hello(c *Conn, clientProtoVer uint32) (serverProtoVer uint32)
+	
 	Authenticate(c *Conn, uuid string, typeId uint32, key string) (deviceId uint32, rfAddr uint16, newKey string, err error)
+	
 	GetRFAddr(c *Conn, id uint32) (rfAddr uint16, err error)
+	
 	JoinRequest(c *Conn, uuid string, typeId uint32) (status JoinRequestStatus, deviceId uint32, rfAddr uint16, err error)
+	
 	ConnectDevice(c *Conn, parentId uint32, uuid string, typeId uint32, port uint16) (id uint32, err error)
 	DisconnectDevice(c *Conn, parentId, id uint32) error
 	MoveDevice(c *Conn, parentId, id uint32, port uint16) error
+	
+	GetType(c *Conn, typeId uint32) (ttl uint32, src string, masks []uint32, intervals []byte, err error)
+	
 	OnClose()
 }
 
@@ -157,7 +164,19 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 				continue
 			}
 			
+		case GetTypeMsg:
+			v := msg.(GetTypeMsg)
 			
+			ttl, src, masks, intervals, err := rh.GetType(c, v.TypeId)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			
+			if ttl != 0 {
+				c.Type(v.TypeId, ttl, src, masks, intervals)
+				
+			}
 		}
 		
 	}
