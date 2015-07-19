@@ -21,9 +21,15 @@ type RequestHandler interface {
 	ConnectDevice(c *Conn, parentId uint32, uuid string, typeId uint32, port uint16) (id uint32, err error)
 	DisconnectDevice(c *Conn, parentId, id uint32) error
 	MoveDevice(c *Conn, parentId, id uint32, port uint16) error
+	OnClose()
 }
 
 func (c *Conn) HandleRequests(rh RequestHandler) {
+	defer func() {
+		rh.OnClose()
+		c.Close()
+	}()
+	
 	for {
 		msg, err := c.Read()
 		if err != nil {
