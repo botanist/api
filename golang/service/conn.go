@@ -71,9 +71,10 @@ func (c *Conn) SendNoType(id uint32) error {
 	return c.Write(NoTypeMsg{TypeId: id})
 }
 
-func (c *Conn) Type(id uint32, ttl uint32, src string, masks []uint32, intervals []uint8) error {
+func (c *Conn) Type(id uint32, isVirtual bool, ttl uint32, src string, masks []uint32, intervals []uint8) error {
 	return c.Write(TypeMsg{
 		TypeId:    id,
+		IsVirtual: isVirtual,
 		RefreshInterval: 	   ttl,
 		Src:       src,
 		Masks:     masks,

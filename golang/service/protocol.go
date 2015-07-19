@@ -115,6 +115,19 @@ type DisconnectDeviceMsg struct {
 	DeviceId       uint32
 }
 
+type GetDevices struct {
+	ParentDeviceId	uint32
+	TypeId			*uint32
+	Virtual			*bool
+}
+
+type DeviceInfo struct {
+	ParentDeviceId 	uint32
+	DeviceId		uint32
+	TypeId			uint32
+	UUID			string
+}
+
 /* Type information */
 type GetTypeMsg struct {
 	TypeId uint32
@@ -122,6 +135,7 @@ type GetTypeMsg struct {
 
 type TypeMsg struct {
 	TypeId          uint32
+	IsVirtual		bool
 	RefreshInterval uint32
 	Src             string
 	Masks           []uint32

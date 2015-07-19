@@ -26,7 +26,7 @@ type RequestHandler interface {
 	DisconnectDevice(c *Conn, parentId, id uint32) error
 	MoveDevice(c *Conn, parentId, id uint32, port uint16) error
 	
-	GetType(c *Conn, typeId uint32) (ttl uint32, src string, masks []uint32, intervals []byte, err error)
+	GetType(c *Conn, typeId uint32) (ttl uint32, isVirtual bool, src string, masks []uint32, intervals []byte, err error)
 	
 	OnClose()
 }
@@ -167,14 +167,14 @@ func (c *Conn) HandleRequests(rh RequestHandler) {
 		case GetTypeMsg:
 			v := msg.(GetTypeMsg)
 			
-			ttl, src, masks, intervals, err := rh.GetType(c, v.TypeId)
+			ttl, virtual, src, masks, intervals, err := rh.GetType(c, v.TypeId)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 			
 			if ttl != 0 {
-				c.Type(v.TypeId, ttl, src, masks, intervals)
+				c.Type(v.TypeId, virtual, ttl, src, masks, intervals)
 				
 			}
 		}
