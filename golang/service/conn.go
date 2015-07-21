@@ -2,9 +2,9 @@ package service
 
 import (
 	"encoding/gob"
+	"errors"
 	"net"
 	"sync"
-	"errors"
 )
 
 type Conn struct {
@@ -39,7 +39,7 @@ func (c *Conn) Write(data interface{}) error {
 }
 
 func (c *Conn) Hello(ver uint32) error {
-	return c.Write(HelloMsg{ProtocolVersion:ver})
+	return c.Write(HelloMsg{ProtocolVersion: ver})
 }
 
 func (c *Conn) Authenticate(typeId uint32, uuid string, key string) error {
@@ -47,7 +47,7 @@ func (c *Conn) Authenticate(typeId uint32, uuid string, key string) error {
 }
 
 func (c *Conn) AuthenticationFailed(reason string) error {
-	return c.Write(AuthenticationFailedMsg{Reason:reason})
+	return c.Write(AuthenticationFailedMsg{Reason: reason})
 }
 
 func (c *Conn) AuthenticationSucceeded(deviceId uint32, rfAddr uint16, newKey string) error {
@@ -73,12 +73,12 @@ func (c *Conn) SendNoType(id uint32) error {
 
 func (c *Conn) Type(id uint32, isVirtual bool, ttl uint32, src string, masks []uint32, intervals []uint8) error {
 	return c.Write(TypeMsg{
-		TypeId:    id,
-		IsVirtual: isVirtual,
-		RefreshInterval: 	   ttl,
-		Src:       src,
-		Masks:     masks,
-		Intervals: intervals,
+		TypeId:          id,
+		IsVirtual:       isVirtual,
+		RefreshInterval: ttl,
+		Src:             src,
+		Masks:           masks,
+		Intervals:       intervals,
 	})
 }
 
