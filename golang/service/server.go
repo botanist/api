@@ -13,7 +13,7 @@ const (
 	JOIN_REQUEST_APPROVED
 )
 
-type RequestHandler interface {
+type Server interface {
 	Hello(c *Conn, clientProtoVer uint32) (serverProtoVer uint32)
 	
 	Authenticate(c *Conn, uuid string, typeId uint32, key string) (deviceId uint32, rfAddr uint16, newKey string, err error)
@@ -31,7 +31,7 @@ type RequestHandler interface {
 	OnClose()
 }
 
-func (c *Conn) HandleRequests(rh RequestHandler) {
+func (c *Conn) ServerHandler(rh Server) {
 	defer func() {
 		rh.OnClose()
 		c.Close()
