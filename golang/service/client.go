@@ -15,6 +15,8 @@ type Client interface {
 	JoinRequestPending(c *Conn, UUID string)
 	JoinRequestDeclined(c *Conn, UUID string)
 
+	Type(c *Conn, typeId uint32, virtual bool, ttl uint32, src string, masks []uint32, intervals []uint8)
+	
 	OnClose()
 }
 
@@ -61,6 +63,10 @@ func (c *Conn) ClientHandler(rh Client) {
 		case JoinRequestDeclinedMsg:
 			v := msg.(JoinRequestDeclinedMsg)
 			rh.JoinRequestDeclined(c, v.UUID)
+			
+		case TypeMsg:
+			v := msg.(TypeMsg)
+			rh.Type(c, v.TypeId, v.IsVirtual, v.RefreshInterval, v.Src, v.Masks, v.Intervals)
 		}
 
 	}
