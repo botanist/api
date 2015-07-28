@@ -103,6 +103,19 @@ func (c *Conn) JoinRequestApproved(UUID string, id uint32, addr uint16) error {
 }
 
 /* WIRED SENSORS */
+func (c *Conn) ConnectDevice(UUID string, typeId uint32, port uint16, parentId uint32) error {
+	return c.Write(ConnectDeviceMsg{UUID: UUID, TypeId: typeId, ParentDeviceId: parentId, Port: port})
+}
+
+func (c *Conn) MoveDevice(deviceId, parentId uint32, port uint16) error {
+	return c.Write(MoveDeviceMsg{DeviceId: deviceId, ParentDeviceId: parentId, Port: port})
+	
+}
+
+func (c *Conn) DisconnectDevice(deviceId, parentId uint32) error {
+	return c.Write(DisconnectDeviceMsg{DeviceId: deviceId, ParentDeviceId: parentId})
+}
+
 func (c *Conn) ConnectDeviceDeclined(UUID string, parentId uint32) error {
 	return c.Write(ConnectDeviceDeclinedMsg{UUID: UUID, ParentDeviceId: parentId})
 }
