@@ -15,6 +15,9 @@ type Client interface {
 	JoinRequestPending(c *Conn, UUID string)
 	JoinRequestDeclined(c *Conn, UUID string)
 
+	ConnectDeviceApproved(c *Conn, UUID string, parentDeviceId uint32, deviceId uint32)
+	ConnectDeviceDeclined(c *Conn, UUID string, parentDeviceId uint32)
+	
 	Type(c *Conn, typeId uint32, virtual bool, ttl uint32, src string, masks []uint32, intervals []uint8)
 	
 	OnClose()
@@ -63,6 +66,14 @@ func (c *Conn) ClientHandler(rh Client) {
 		case JoinRequestDeclinedMsg:
 			v := msg.(JoinRequestDeclinedMsg)
 			rh.JoinRequestDeclined(c, v.UUID)
+		
+		case ConnectDeviceApprovedMsg:
+			v := msg.(ConnectDeviceApprovedMsg)
+			rh.ConnectDeviceApproved(c, v.UUID, v.ParentDeviceId, v.DeviceId)
+			
+		case ConnectDeviceDeclinedMsg:
+			v := msg.(ConnectDeviceDeclinedMsg)
+			rh.ConnectDeviceDeclined(c, v.UUID, v.ParentDeviceId)
 			
 		case TypeMsg:
 			v := msg.(TypeMsg)
