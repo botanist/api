@@ -124,6 +124,16 @@ func (c *Conn) ConnectDeviceApproved(UUID string, parentId, id uint32) error {
 	return c.Write(ConnectDeviceApprovedMsg{UUID: UUID, ParentDeviceId: parentId, DeviceId: id})
 }
 
+func (c *Conn) SensorData(deviceId uint32, ts uint32, data map[string]float32, mask uint32, rawValues []uint16) {
+	d := SensorDataMsg{DeviceId: deviceId, TimeStamp: ts, Values: data}
+	
+	if mask > 0 {
+		d.RawData = &RawSensorData{Sensors: mask, Values: rawValues}
+	}
+	
+	c.Write(d)
+}
+
 /* Utilities */
 
 func (c *Conn) RemoteAddr() net.Addr {

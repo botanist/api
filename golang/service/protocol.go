@@ -149,14 +149,14 @@ type NoTypeMsg struct {
 /* Sensor data */
 type RawSensorData struct {
 	Sensors uint32
-	Values  []uint16
+	Values 	[]uint16
 }
 
 type SensorDataMsg struct {
 	DeviceId  uint32
 	TimeStamp uint32
 	Values    map[string]float32
-	Raw       *RawSensorData
+	RawData	  *RawSensorData
 }
 
 type SensorDataSyncedMsg struct {

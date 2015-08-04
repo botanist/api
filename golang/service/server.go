@@ -28,6 +28,8 @@ type Server interface {
 
 	GetType(c *Conn, typeId uint32) (ttl uint32, isVirtual bool, src string, masks []uint32, intervals []byte, err error)
 
+	SensorData(c *Conn, deviceId, timeStamp uint32, values map[string]float32, sensors uint32, raw []uint16)
+	
 	OnClose()
 }
 
@@ -177,7 +179,20 @@ func (c *Conn) ServerHandler(rh Server) {
 				c.Type(v.TypeId, virtual, ttl, src, masks, intervals)
 
 			}
-		}
+			
+		case SensorDataMsg:
+			v := msg.(SensorDataMsg)
+			
+			var rawMask uint32
+			var rawValues []uint16
+			
+			if v.RawData != nil {
+				rawMask = v.RawData.Sensors
+				rawValues = v.RawData.Values
+			}
+			
+			rh.SensorData(c, v.DeviceId, v.TimeStamp, v.Values, rawMask, rawValues)
+		}		
 
 	}
 }
